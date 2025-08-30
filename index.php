@@ -132,13 +132,13 @@
                 </div>
                 <ul class="nav flex-column" id="sidebarLinks">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">
+                        <a class="nav-link" href="dashboard.php">
                             <i class="fas fa-home"></i> Dashboard
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-plus-circle"></i> Add Site
+                  <li class="nav-item">
+                        <a class="nav-link" href="users.php">
+                            <i class="fas fa-user-lock"></i> User Management
                         </a>
                     </li>
                     <li class="nav-item">
@@ -146,9 +146,9 @@
                             <i class="fas fa-plug"></i> Plugin Updates
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="users.php">
-                            <i class="fas fa-user-lock"></i> User Management
+                      <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-plus-circle"></i> Add Site
                         </a>
                     </li>
                     <li class="nav-item">
