@@ -1,4 +1,7 @@
 <?php
+require_once 'config.php';
+require_once 'auth.php';
+requireAuth(); // This will redirect to login if not authenticated
 // Start output buffering to prevent headers already sent error
 ob_start();
 // Include database configuration

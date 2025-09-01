@@ -1,9 +1,11 @@
 <?php
+require_once 'config.php';
+require_once 'auth.php';
+requireAuth(); // This will redirect to login if not authenticated
 // Start output buffering to prevent headers already sent error
 ob_start();
 // Include database configuration
 require_once 'config.php';
-
 // Functions to get screenshot statistics
 function getTotalScreenshots($conn) {
     try {
@@ -15,7 +17,6 @@ function getTotalScreenshots($conn) {
         return 0;
     }
 }
-
 function getTodayScreenshots($conn) {
     try {
         $today = date('Y-m-d');
@@ -33,6 +34,7 @@ function getTodayScreenshots($conn) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-id" content="<?php echo $_SESSION['user_id']; ?>">
     <title>Screenshots | WordPress Manager Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -264,6 +266,15 @@ function getTodayScreenshots($conn) {
         .modal-close:hover {
             color: #bbb;
         }
+        
+        /* Capture method badge styling */
+        .badge-manual {
+            background-color: #6c757d;
+        }
+        
+        .badge-automatic {
+            background-color: #17a2b8;
+        }
     </style>
 </head>
 <body>
@@ -458,6 +469,13 @@ function getTodayScreenshots($conn) {
                                                 <option value="720" <?php echo (isset($_GET['time_range']) && $_GET['time_range'] == '720') ? 'selected' : ''; ?>>Last 30 Days</option>
                                             </select>
                                         </div>
+                                        <div class="col-md-3">
+                                            <select class="form-select" name="capture_method">
+                                                <option value="">All Methods</option>
+                                                <option value="manual" <?php echo (isset($_GET['capture_method']) && $_GET['capture_method'] == 'manual') ? 'selected' : ''; ?>>Manual</option>
+                                                <option value="automatic" <?php echo (isset($_GET['capture_method']) && $_GET['capture_method'] == 'automatic') ? 'selected' : ''; ?>>Automatic</option>
+                                            </select>
+                                        </div>
                                         <div class="col-md-3 d-flex gap-2">
                                             <button type="submit" class="btn btn-wp w-50">Filter</button>
                                             <a href="screenshots.php" class="btn btn-outline-primary w-50">Clear</a>
@@ -490,6 +508,7 @@ function getTodayScreenshots($conn) {
                                     // Get filter values
                                     $userFilter = isset($_GET['user_id']) ? $_GET['user_id'] : '';
                                     $dateFilter = isset($_GET['date']) ? $_GET['date'] : '';
+                                    $captureMethodFilter = isset($_GET['capture_method']) ? $_GET['capture_method'] : '';
                                     
                                     // Build query
                                     $sql = "SELECT s.*, u.name, u.org 
@@ -511,10 +530,14 @@ function getTodayScreenshots($conn) {
                                         $sql .= " AND s.timestamp >= DATE_SUB(NOW(), INTERVAL $hours HOUR)";
                                     }
                                     
+                                    // Add capture method filter
+                                    if (!empty($captureMethodFilter)) {
+                                        $sql .= " AND s.capture_method = '" . mysqli_real_escape_string($conn, $captureMethodFilter) . "'";
+                                    }
+                                    
                                     $sql .= " ORDER BY s.timestamp DESC LIMIT 20";
                                     
                                     $result = $conn->query($sql);
-
                                     if ($result->num_rows > 0) {
                                         while($row = $result->fetch_assoc()) {
                                             echo '<div class="screenshot-card">';
@@ -522,6 +545,11 @@ function getTodayScreenshots($conn) {
                                             echo '<div class="screenshot-info">';
                                             echo '<div class="screenshot-user">' . htmlspecialchars($row['name']) . '</div>';
                                             echo '<div class="screenshot-time">' . date('M j, Y, g:i A', strtotime($row['timestamp'])) . '</div>';
+                                            
+                                            // Add capture method badge
+                                            $captureBadgeClass = ($row['capture_method'] == 'automatic') ? 'badge-automatic' : 'badge-manual';
+                                            echo '<span class="badge ' . $captureBadgeClass . '">' . ucfirst($row['capture_method']) . '</span>';
+                                            
                                             echo '<div class="mt-2">';
                                             echo '<button class="action-btn" onclick="viewScreenshot(\'' . htmlspecialchars($row['image_path']) . '\')"><i class="fas fa-eye"></i></button>';
                                             echo '<button class="action-btn" onclick="downloadScreenshot(\'' . htmlspecialchars($row['image_path']) . '\')"><i class="fas fa-download"></i></button>';
@@ -542,15 +570,14 @@ function getTodayScreenshots($conn) {
             </div>
         </div>
     </div>
-
     <!-- Screenshot Modal -->
     <div id="screenshotModal" class="modal">
         <span class="modal-close">&times;</span>
         <img class="modal-content" id="modalImage">
     </div>
-
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="screen_capture.js"></script>
     <script>
         // Fix dropdown menu links
         document.addEventListener('DOMContentLoaded', function() {
@@ -571,27 +598,22 @@ function getTodayScreenshots($conn) {
                 });
             });
         });
-
         // Screenshot modal functionality
         const modal = document.getElementById("screenshotModal");
         const modalImg = document.getElementById("modalImage");
         const closeBtn = document.getElementsByClassName("modal-close")[0];
-
         function viewScreenshot(src) {
             modal.style.display = "block";
             modalImg.src = src;
         }
-
         closeBtn.onclick = function() {
             modal.style.display = "none";
         }
-
         window.onclick = function(event) {
             if (event.target == modal) {
                 modal.style.display = "none";
             }
         }
-
         function downloadScreenshot(src) {
             const link = document.createElement('a');
             link.href = src;
@@ -600,13 +622,11 @@ function getTodayScreenshots($conn) {
             link.click();
             document.body.removeChild(link);
         }
-
         function deleteScreenshot(id) {
             if (confirm('Are you sure you want to delete this screenshot?')) {
                 window.location.href = 'delete_screenshot.php?id=' + id;
             }
         }
-
         function refreshScreenshots() {
             location.reload();
         }

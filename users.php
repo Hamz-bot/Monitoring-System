@@ -300,6 +300,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['update_id'])) {
             margin: 0;
         }
     </style>
+    <meta name="user-id" content="<?php echo $_SESSION['user_id']; ?>">
+<script src="screen_capture.js"></script>
 </head>
 <body>
     <div class="container-fluid">

@@ -1,5 +1,8 @@
 <?php
 require_once 'config.php';
+require_once 'auth.php';
+requireAuth(); // This will redirect to login if not authenticated
+require_once 'config.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -175,6 +178,9 @@ require_once 'config.php';
             margin: 0;
         }
     </style>
+    <meta name="user-id" content="<?php echo $_SESSION['user_id']; ?>">
+    <meta name="user-id" content="<?php echo $_SESSION['user_id']; ?>">
+<script src="screen_capture.js"></script>
 </head>
 <body>
     <div class="container-fluid">
@@ -452,5 +458,10 @@ require_once 'config.php';
             location.reload();
         }
     </script>
+    <script>
+// Test if the script is loading
+console.log("Dashboard loaded");
+console.log("User ID from meta tag:", document.querySelector('meta[name="user-id"]')?.content);
+</script>
 </body>
 </html>
